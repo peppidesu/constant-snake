@@ -66,7 +66,8 @@ Still, I believe it is useful to practice optimization skills like this.
 Worst-case, the same as every snake implemenation. In the end game your snake 
 takes up the entire playing field, so you need to store `width*height` snake 
 pieces somehow. This means your space complexity is always gonna end up being at 
-least quadratic w.r.t. the side-length of the screen. 
+least quadratic w.r.t. the side-length of the screen, unless you enjoy playing
+1D snake.
 
 The best-case complexity is the same as the worst-case, because the vectors that
 store the bitmask and the snake body are pre-allocated beforehand. This is worse
