@@ -54,13 +54,14 @@ of course O(1).
 - Exit with `Esc`.
 
 ## FAQ
-> _Isn't this a whole bunch of micro-optimization?_
+
+### _Isn't this a whole bunch of micro-optimization?_
 
 Yes, it probably is. this project is just for fun anyway :)
 
 Still, I believe it is useful to practice optimization skills like this.
 
-> _What is the space complexity of this?_
+### _What is the space complexity of this?_
 
 Worst-case, the same as every snake implemenation. In the end game your snake 
 takes up the entire playing field, so you need to store `width*height` snake 
