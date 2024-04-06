@@ -35,7 +35,7 @@ of course O(1).
 ## How to run
 
 ### Requirements
-- `rustc >=1.76.0`
+- `rustc >= 1.76.0`
 
 ### Steps
 1. Clone the repo with:
