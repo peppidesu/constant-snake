@@ -52,3 +52,28 @@ of course O(1).
 ### How to play
 - Use the arrow keys to move. 
 - Exit with `Esc`.
+
+## FAQ
+> _Isn't this a whole bunch of micro-optimization?_
+
+Yes, it probably is. this project is just for fun anyway :)
+
+Still, I believe it is useful to practice optimization skills like this.
+
+> _What is the space complexity of this?_
+
+Worst-case, the same as every snake implemenation. In the end game your snake 
+takes up the entire playing field, so you need to store `width*height` snake 
+pieces somehow. This means your space complexity is always gonna end up being at 
+least quadratic w.r.t. the side-length of the screen. 
+
+The best-case complexity is the same as the worst-case, because the vectors that
+store the bitmask and the snake body are pre-allocated beforehand. This is worse
+than most snake implementations.
+
+TL;DR: if you are looking for a memory efficient snake implemenation, this is not
+it.
+
+## License
+Licensed under the AGPL-3.0 license.
+
