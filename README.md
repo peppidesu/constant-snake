@@ -18,7 +18,7 @@ constant-time.
 Every time the snake moves, you could argue that only the tail and the head of 
 the snake change. more specifically, you could think of "moving forward" as
 moving the tail piece in front of the head. this can be done in O(1) time using
-a linked list. A special implementation of a linked list (CellBuf) is used to 
+a linked list. A special implementation of a linked list (`CellBuf`) is used to 
 make sure all body pieces are adjecent in memory, reducing cache misses.
 
 For collision detection, a bitmask is used. Because once again only the head and
