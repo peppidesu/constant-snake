@@ -1,3 +1,6 @@
+// (c) 2024 Pepijn Bakker
+// This code is licensed under the AGPL-3.0 license (see LICENSE for details)
+
 mod point;
 pub use point::*;
 

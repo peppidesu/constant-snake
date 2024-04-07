@@ -1,3 +1,5 @@
+// (c) 2024 Pepijn Bakker
+// This code is licensed under the AGPL-3.0 license (see LICENSE for details)
 
 #[derive(Debug)]
 pub enum Error {
@@ -11,4 +13,3 @@ impl From<std::io::Error> for Error {
         Error::Io(err)
     }
 }
-

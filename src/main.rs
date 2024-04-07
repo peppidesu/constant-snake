@@ -1,8 +1,11 @@
+// (c) 2024 Pepijn Bakker
+// This code is licensed under the AGPL-3.0 license (see LICENSE for details)
+
 use constant_snake::*;
 
 use crossterm::{
     event::{poll, read, Event, KeyCode}, 
-    terminal::enable_raw_mode
+    terminal::{disable_raw_mode, enable_raw_mode}
 };
 use rand::Rng;
 use std::time::Duration;
@@ -23,7 +26,9 @@ enum GameStepResult {
 }
 
 impl Game {
-    fn new(config: GameConfig) -> Self {      
+    fn new() -> Self {      
+        let config = GameConfig::default();
+
         let result = Game {
             snake: Snake::new(Point::new(0, 0), &config),
             apple: Apple::new(Point::new(1, 0)),
@@ -39,9 +44,7 @@ impl Game {
     
         match result {
             SnakeStepResult::AppleEaten(change) => {
-                if self.snake.len() == (self.config.screen_width as usize * self.config.screen_height as usize) {                    
-                    println!("You win!");
-
+                if self.snake.len() == self.config.total_cells() {                    
                     GameStepResult::Win
                 } else {
                     self.randomize_apple_pos();
@@ -50,14 +53,11 @@ impl Game {
                     GameStepResult::AppleEaten(change, self.apple.position())                
                 }            
             }
-            SnakeStepResult::GameOver => {
-                println!("Game Over!");
-                
-                GameStepResult::GameOver
-            }
+            SnakeStepResult::GameOver => GameStepResult::GameOver,            
             SnakeStepResult::Ok(change) => GameStepResult::Ok(change.clone())                        
         }                
     }
+
     fn randomize_apple_pos(&mut self) {
         while self.snake.overlaps(self.apple.position()) {
             let x = self.rng.gen_range(0..self.config.screen_width) as i32;
@@ -72,14 +72,11 @@ impl Game {
 
 fn main() -> Result<()> {
     enable_raw_mode()?;
-    let config = GameConfig {
-        screen_width: 20,
-        screen_height: 20,
-        snake_speed: 150,
-    };
     
-    let mut game = Game::new(config);    
+    let mut game = Game::new();    
+
     game.renderer.draw_first_frame(game.apple.position())?;    
+    
     let sleep_duration = Duration::from_millis(game.config.snake_speed);
     
     loop {
@@ -125,9 +122,11 @@ fn main() -> Result<()> {
                 game.renderer.draw_diff_apple(apple_pos)?;
             }
             GameStepResult::GameOver => {
+                game.renderer.draw_game_over()?;
                 break;
             }
             GameStepResult::Win => {
+                game.renderer.draw_win()?;
                 break;
             }
         }
@@ -135,5 +134,7 @@ fn main() -> Result<()> {
         game.renderer.reset_cursor()?;
     }
 
+    disable_raw_mode()?;
+    
     Ok(())
 }
