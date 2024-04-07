@@ -1,35 +1,18 @@
-mod point;
-mod apple;
-mod snake;
-mod config;
-mod bitmask;
+use constant_snake::*;
 
-use point::*;
-use apple::*;
-use snake::*;
-use config::*;
-use bitmask::*;
-
-use std::io::Stdout;
-use std::{io::stdout, time::Duration};
-
-use crossterm::terminal::enable_raw_mode;
-
+use crossterm::{
+    event::{poll, read, Event, KeyCode}, 
+    terminal::enable_raw_mode
+};
 use rand::Rng;
-
-use crossterm::{cursor, style, ExecutableCommand};
-
-use crossterm::event::{poll, read, Event, KeyCode};
+use std::time::Duration;
 
 struct Game {
     snake: Snake,
     apple: Apple,
-    config: GameConfig,
     rng: rand::rngs::ThreadRng,
-    stdout: Stdout,
-}
-fn move_to(pos: Point) -> crossterm::cursor::MoveTo {
-    return crossterm::cursor::MoveTo((pos.x as u16 + 1) * 2, pos.y as u16 + 1);
+    renderer: Renderer,
+    config: GameConfig,
 }
 
 enum GameStepResult {
@@ -40,15 +23,13 @@ enum GameStepResult {
 }
 
 impl Game {
-    fn new(config: GameConfig) -> Self {
-        let snake = Snake::new(Point::new(0, 0), &config);
-        let apple = Apple::new(Point::new(1, 0));
+    fn new(config: GameConfig) -> Self {      
         let result = Game {
-            snake,
-            apple,
-            config,
+            snake: Snake::new(Point::new(0, 0), &config),
+            apple: Apple::new(Point::new(1, 0)),
             rng: rand::thread_rng(),
-            stdout: stdout(),
+            renderer: Renderer::new(&config),
+            config,
         };        
         result
     }
@@ -84,99 +65,27 @@ impl Game {
             self.apple.move_to(Point::new(x, y));
         }
     }
-    fn draw_first(&mut self) -> std::io::Result<()> {
-        self.stdout.execute(
-            crossterm::terminal::Clear(crossterm::terminal::ClearType::All)
-        )
-        .unwrap();
-        
-
-        let pos = self.apple.position();
-        
-        self.stdout
-            .execute(move_to(pos))?
-            .execute(style::SetForegroundColor(style::Color::Red))?;            
-        
-        print!("()");
-
-        self.stdout.execute(style::SetForegroundColor(style::Color::Black))?;
-        
-        // borders
-        for x in 0..self.config.screen_width {
-            self.stdout.execute(cursor::MoveTo((x as u16 + 1) * 2, 0))?;                
-            print!("--");
-            self.stdout.execute(cursor::MoveTo(
-                (x as u16 + 1) * 2, 
-                self.config.screen_height as u16 + 1
-            ))?;
-            print!("--");
-        }
-
-        for y in 0..self.config.screen_height {
-            self.stdout.execute(cursor::MoveTo(0, y as u16 + 1))?;                
-            print!("|");
-            self.stdout.execute(cursor::MoveTo(
-                (self.config.screen_width as u16 + 1) * 2, 
-                y as u16 + 1
-            ))?;                
-            print!("|");
-        }
-
-        self.stdout
-            .execute(cursor::MoveTo(0, self.config.screen_height as u16 + 2))?;
-        
-        Ok(())
-    }
-    fn draw_diff_snake(&mut self, change: SnakeChange) -> std::io::Result<()> {        
-        self.stdout
-            .execute(cursor::MoveTo((
-                change.cell_added.x as u16 + 1) * 2, 
-                change.cell_added.y as u16 + 1
-            ))?
-            .execute(style::SetForegroundColor(style::Color::Green))?;
-        print!("[]");        
-        if let Some(pos) = change.cell_removed {
-            self.stdout.execute(move_to(pos))?;                
-            print!("  ");
-        }               
     
-        Ok(())
-    }
-    fn draw_diff_apple(&mut self, change: Point) -> std::io::Result<()> {
-        self.stdout
-            .execute(move_to(change))?             
-            .execute(style::SetForegroundColor(style::Color::Red))?;
-        print!("()");
-    
-        Ok(())
-    }
-    fn reset_cursor(&mut self) -> std::io::Result<()> {
-        self.stdout
-            .execute(cursor::MoveTo(0, self.config.screen_height as u16 + 2))?;
-        
-        Ok(())
-    }
 }
 
 
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<()> {
     enable_raw_mode()?;
     let config = GameConfig {
         screen_width: 20,
         screen_height: 20,
         snake_speed: 150,
     };
-
-    let sleep_duration = Duration::from_millis(config.snake_speed);
-
-    let mut game = Game::new(config);
-    game.draw_first()?;
+    
+    let mut game = Game::new(config);    
+    game.renderer.draw_first_frame(game.apple.position())?;    
+    let sleep_duration = Duration::from_millis(game.config.snake_speed);
+    
     loop {
         let t1 = std::time::Instant::now();
             
         if poll(sleep_duration)? {            
-
             match read()? {
                 Event::Key(event) => {                    
                     match event.code {
@@ -209,11 +118,11 @@ fn main() -> std::io::Result<()> {
 
         match game.step() {
             GameStepResult::Ok(change) => {
-                game.draw_diff_snake(change)?;
+                game.renderer.draw_diff_snake(change)?;
             }
             GameStepResult::AppleEaten(change, apple_pos) => {
-                game.draw_diff_snake(change)?;
-                game.draw_diff_apple(apple_pos)?;
+                game.renderer.draw_diff_snake(change)?;
+                game.renderer.draw_diff_apple(apple_pos)?;
             }
             GameStepResult::GameOver => {
                 break;
@@ -223,7 +132,7 @@ fn main() -> std::io::Result<()> {
             }
         }
 
-        game.reset_cursor()?;
+        game.renderer.reset_cursor()?;
     }
 
     Ok(())
